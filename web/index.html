@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0d1117">
+<title>muxboard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/xterm.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>mux<span>board</span></h1>
+  <div id="conn" class="pill off">connecting…</div>
+  <button id="btn-add" class="primary">＋ App</button>
+</header>
+
+<div id="gate" class="hidden">
+  <h2>Locked</h2>
+  <p>Open muxboard using the tokened link printed by <code>muxboard serve</code>
+     (it looks like <code>http://…/#t=…</code>), or paste the token:</p>
+  <form id="gate-form"><input id="gate-token" placeholder="token" autocomplete="off">
+  <button class="primary">Unlock</button></form>
+</div>
+
+<div id="banner" class="hidden">
+  <div id="banner-text"></div>
+  <button id="btn-restart-killed" class="primary">Restart all</button>
+</div>
+
+<main>
+  <section>
+    <h2>Apps</h2>
+    <div id="apps"></div>
+    <div id="apps-empty" class="empty hidden">
+      No apps yet. Tap <b>＋ App</b> to run something under supervision.
+    </div>
+  </section>
+  <section id="unmanaged-section" class="hidden">
+    <h2>Other tmux windows</h2>
+    <div id="unmanaged"></div>
+  </section>
+</main>
+
+<!-- terminal overlay -->
+<div id="term-view" class="overlay hidden">
+  <div class="term-head">
+    <button id="term-back">‹ Back</button>
+    <div id="term-title"></div>
+    <div id="term-status" class="dot"></div>
+  </div>
+  <div id="term"></div>
+  <div class="keybar">
+    <button data-key="Escape">esc</button>
+    <button data-key="Tab">tab</button>
+    <button id="key-ctrl" class="modifier">ctrl</button>
+    <button data-key="Up">▲</button>
+    <button data-key="Down">▼</button>
+    <button data-key="Left">◀</button>
+    <button data-key="Right">▶</button>
+    <button data-key="C-c" class="danger">^C</button>
+    <button id="term-menu">⋮</button>
+  </div>
+</div>
+
+<!-- new app modal -->
+<div id="modal-add" class="overlay hidden">
+  <form class="sheet" id="form-add">
+    <h2>New app</h2>
+    <label>Name <input name="name" required placeholder="my-bot" autocomplete="off"></label>
+    <label>Command <textarea name="cmd" required rows="3"
+      placeholder="python3 bot.py&#10;(runs via sh -c, from the working dir)"></textarea></label>
+    <label>Working directory <input name="cwd" placeholder="~ (default)" autocomplete="off"></label>
+    <label>Auto-restart
+      <select name="autorestart">
+        <option value="off">off — I'll restart it myself</option>
+        <option value="on-crash">on crash — restart on non-zero exit</option>
+        <option value="always">always — restart even after clean exits</option>
+      </select>
+    </label>
+    <div class="row">
+      <button type="button" class="ghost" data-close>Cancel</button>
+      <button type="submit" class="primary">Create &amp; start</button>
+    </div>
+  </form>
+</div>
+
+<!-- per-app action sheet -->
+<div id="modal-app" class="overlay hidden">
+  <div class="sheet" id="sheet-app">
+    <h2 id="sheet-title"></h2>
+    <div id="sheet-sub" class="sub"></div>
+    <div class="actions" id="sheet-actions"></div>
+    <label>Auto-restart
+      <select id="sheet-autorestart">
+        <option value="off">off</option>
+        <option value="on-crash">on crash</option>
+        <option value="always">always</option>
+      </select>
+    </label>
+    <div class="row">
+      <button type="button" class="ghost" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- crash log -->
+<div id="modal-crash" class="overlay hidden">
+  <div class="sheet wide">
+    <h2>Last words</h2>
+    <pre id="crash-text"></pre>
+    <div class="row"><button type="button" class="ghost" data-close>Close</button></div>
+  </div>
+</div>
+
+<script src="vendor/xterm.js"></script>
+<script src="vendor/addon-fit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
