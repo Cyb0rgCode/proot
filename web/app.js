@@ -411,6 +411,7 @@ function openTerm(paneID, title, app) {
     if (termWS.readyState === 1) termWS.send(JSON.stringify({ t: "input", data }));
   });
   window.addEventListener("resize", onWinResize);
+  attachViewportSync();
   setTimeout(() => { fit.fit(); sendResize(); term.focus(); }, 60);
 }
 
@@ -418,6 +419,37 @@ function onWinResize() {
   if (!fit) return;
   fit.fit();
   sendResize();
+}
+
+/* Phone keyboards overlay the page instead of resizing it, which would
+ * leave the key bar hidden behind the keyboard. While the terminal is
+ * open, pin the overlay to the *visual* viewport: shrink it to the
+ * visible height and follow its offset, so the key bar always sits
+ * directly above the keyboard. */
+function syncTermViewport() {
+  const vv = window.visualViewport;
+  const tv = $("#term-view");
+  if (!vv || tv.classList.contains("hidden")) return;
+  tv.style.height = vv.height + "px";
+  tv.style.top = vv.offsetTop + "px";
+  clearTimeout(syncTermViewport._t);
+  syncTermViewport._t = setTimeout(() => { if (fit) { fit.fit(); sendResize(); } }, 80);
+}
+
+function attachViewportSync() {
+  if (!window.visualViewport) return;
+  visualViewport.addEventListener("resize", syncTermViewport);
+  visualViewport.addEventListener("scroll", syncTermViewport);
+  syncTermViewport();
+}
+
+function detachViewportSync() {
+  if (!window.visualViewport) return;
+  visualViewport.removeEventListener("resize", syncTermViewport);
+  visualViewport.removeEventListener("scroll", syncTermViewport);
+  const tv = $("#term-view");
+  tv.style.height = "";
+  tv.style.top = "";
 }
 
 function sendResize() {
@@ -428,6 +460,7 @@ function sendResize() {
 
 function closeTerm() {
   window.removeEventListener("resize", onWinResize);
+  detachViewportSync();
   if (termWS) termWS.close();
   if (term) term.dispose();
   term = fit = termWS = termApp = null;
@@ -451,6 +484,10 @@ function setShift(v) {
   shiftArmed = v;
   $("#key-shift").classList.toggle("armed", v);
 }
+// Tapping the key bar must not move focus off the terminal's textarea —
+// otherwise the phone keyboard closes on every tap.
+document.querySelector(".keybar").addEventListener("mousedown", (e) => e.preventDefault());
+
 $("#key-ctrl").addEventListener("click", () => { setCtrl(!ctrlArmed); term && term.focus(); });
 $("#key-shift").addEventListener("click", () => { setShift(!shiftArmed); term && term.focus(); });
 
