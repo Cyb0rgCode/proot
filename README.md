@@ -5,6 +5,11 @@ everything running on your phone server (Termux + proot) or any Linux box: see w
 running, what crashed and why, restart with one tap, and type into a real live
 terminal — from any browser, phone or PC.
 
+**[▶ Try the live demo](https://cyb0rgcode.github.io/proot/)** — the real UI running
+against a simulated agent in your browser. Every button works (restart apps, adopt
+windows, open terminals, revive "killed" apps); nothing is real, nothing to install.
+Best viewed on a phone.
+
 <p>
 <img src="docs/ui-dashboard.png" width="300" alt="dashboard">
 <img src="docs/ui-terminal.png" width="300" alt="terminal">

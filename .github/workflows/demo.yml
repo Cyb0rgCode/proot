@@ -1,0 +1,44 @@
+name: demo
+
+# Publishes the web UI to GitHub Pages with a simulated agent
+# (web/demo-mock.js) so anyone can try the dashboard without installing.
+
+on:
+  push:
+    branches: ["main", "claude/brainstorm-idea-rw7rba"]
+    paths: ["web/**", ".github/workflows/demo.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build demo site
+        run: |
+          mkdir -p _site
+          cp -r web/* _site/
+          # activate demo mode: load the mock agent before the app
+          sed -i 's|<script src="app.js"></script>|<script src="demo-mock.js"></script>\n<script src="app.js"></script>|' _site/index.html
+          # PWA start_url must be relative under the /proot/ subpath
+          sed -i 's|"start_url": "/"|"start_url": "./"|' _site/manifest.json
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
