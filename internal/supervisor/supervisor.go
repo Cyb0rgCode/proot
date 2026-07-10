@@ -213,8 +213,11 @@ func (s *Supervisor) Start(id string) error {
 	if err := tmuxctl.EnsureSession(config.SessionName); err != nil {
 		return err
 	}
+	// --dir pins the wrapper to the agent's state directory: the window
+	// inherits env from the tmux server, which may have been started by a
+	// user shell with a different (or no) PROOT_DIR.
 	_, _, err = tmuxctl.NewWindow(config.SessionName, app.ID,
-		[]string{s.Exe, "run", "--id", app.ID})
+		[]string{s.Exe, "run", "--id", app.ID, "--dir", config.Dir()})
 	return err
 }
 

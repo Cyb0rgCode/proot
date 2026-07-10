@@ -38,10 +38,14 @@ func main() {
 	case "run":
 		fs := flag.NewFlagSet("run", flag.ExitOnError)
 		id := fs.String("id", "", "app id (from apps.json)")
+		dir := fs.String("dir", "", "proot state directory (overrides PROOT_DIR)")
 		fs.Parse(os.Args[2:])
+		if *dir != "" {
+			os.Setenv("PROOT_DIR", *dir)
+		}
 		os.Exit(runner.Main(*id))
 	case "version", "--version", "-v":
-		fmt.Println("proot 0.1.0")
+		fmt.Println("proot 0.2.0")
 	default:
 		usage()
 		os.Exit(2)

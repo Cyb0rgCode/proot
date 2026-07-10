@@ -117,6 +117,12 @@ section h2 {
 .sheet .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .sheet .sub { color: var(--dim); font-size: 13px; margin: -6px 0 10px; font-family: ui-monospace, monospace; }
 .sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sheet label.check {
+  display: flex; align-items: center; gap: 9px; color: var(--fg);
+  font-size: 14px; cursor: pointer;
+}
+.sheet label.check input { width: auto; margin: 0; accent-color: var(--accent); }
+.sheet p.sub { margin-bottom: 4px; font-family: inherit; }
 .sheet pre {
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   padding: 12px; overflow: auto; max-height: 55vh; font-size: 12.5px;

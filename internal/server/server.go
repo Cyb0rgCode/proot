@@ -84,6 +84,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("DELETE /api/apps/{id}", s.auth(s.handleDeleteApp))
 	mux.HandleFunc("POST /api/apps/{id}/action", s.auth(s.handleAction))
 	mux.HandleFunc("GET /api/apps/{id}/crash", s.auth(s.handleCrashLog))
+	mux.HandleFunc("POST /api/adopt", s.auth(s.handleAdopt))
 	mux.HandleFunc("POST /api/restart-killed", s.auth(s.handleRestartKilled))
 	mux.HandleFunc("GET /api/events", s.auth(s.handleEvents))
 	mux.HandleFunc("GET /api/term", s.auth(s.handleTerm))
@@ -327,6 +328,86 @@ func (s *Server) handleCrashLog(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write(b)
+}
+
+type adoptReq struct {
+	PaneID      string `json:"pane_id"`
+	Name        string `json:"name"`
+	Cmd         string `json:"cmd"`
+	Cwd         string `json:"cwd"`
+	Autorestart string `json:"autorestart"`
+	// Takeover (default true) kills the adopted window and relaunches the
+	// command under the wrapper right away. False stores the definition
+	// only and leaves the window running unsupervised until you start it.
+	Takeover *bool `json:"takeover"`
+}
+
+// handleAdopt turns an unmanaged tmux window into a managed app. The
+// process itself can't be re-parented into the wrapper (no reptyr), so
+// adoption means: save a definition and, with takeover, restart the
+// command under supervision.
+func (s *Server) handleAdopt(w http.ResponseWriter, r *http.Request) {
+	var req adoptReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, 400, err)
+		return
+	}
+	pane, ok := findPane(req.PaneID)
+	if !ok {
+		writeErr(w, 404, errors.New("pane not found"))
+		return
+	}
+	// Refuse to adopt a window proot already manages.
+	if apps, err := s.sup.Store.Load(); err == nil {
+		for _, a := range apps {
+			if rs, _ := state.ReadRunState(a.ID); rs != nil && rs.WindowID == pane.WindowID {
+				writeErr(w, 409, fmt.Errorf("that window already belongs to app %q", a.ID))
+				return
+			}
+		}
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		req.Name = pane.WindowName
+	}
+	req.Cmd = strings.TrimSpace(req.Cmd)
+	if req.Cmd == "" {
+		writeErr(w, 400, errors.New("cmd is required (the pane's command couldn't be guessed — fill it in)"))
+		return
+	}
+	if req.Autorestart == "" {
+		req.Autorestart = "off"
+	}
+	if !validRestart.MatchString(req.Autorestart) {
+		writeErr(w, 400, errors.New("autorestart must be off, on-crash, or always"))
+		return
+	}
+	id := state.SlugID(req.Name)
+	if _, exists, _ := s.sup.Store.Get(id); exists {
+		writeErr(w, 409, fmt.Errorf("an app with id %q already exists", id))
+		return
+	}
+	app := state.App{
+		ID: id, Name: req.Name, Cmd: req.Cmd, Cwd: req.Cwd,
+		Autorestart: req.Autorestart,
+	}
+	if err := s.sup.Store.Upsert(app); err != nil {
+		writeErr(w, 500, err)
+		return
+	}
+	takeover := req.Takeover == nil || *req.Takeover
+	if takeover {
+		// Kill first so the old and new copies never run concurrently.
+		if err := tmuxctl.KillWindow(pane.WindowID); err != nil {
+			writeErr(w, 500, fmt.Errorf("app saved but the old window could not be closed: %w", err))
+			return
+		}
+		if err := s.sup.Start(id); err != nil {
+			writeErr(w, 500, fmt.Errorf("app saved and old window closed, but start failed: %w", err))
+			return
+		}
+	}
+	writeJSON(w, 201, map[string]any{"app": app, "takeover": takeover})
 }
 
 func (s *Server) handleRestartKilled(w http.ResponseWriter, r *http.Request) {

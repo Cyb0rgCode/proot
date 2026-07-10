@@ -26,6 +26,9 @@ proot marries the two, and adds the one thing nothing else can tell you:
 
 - **App cards** — every managed program gets a card with live status, last output line,
   uptime, and restart count. Unmanaged tmux windows show up too, and are attachable.
+- **Adopt** — one tap turns a tmux window you started by hand into a supervised app:
+  the form prefills from the pane (command, directory) and relaunches it under the
+  wrapper — or just saves the definition and leaves the window alone.
 - **Real crash detection** — apps run inside a tiny wrapper that records exit codes,
   keeps the pane alive after a crash (with the error still on screen), and snapshots
   the last 200 lines as a crash log.
@@ -113,8 +116,7 @@ Backup = copy the directory.
 
 ## Roadmap (v2)
 
-ntfy.sh crash notifications · CPU/RAM per app · scheduled jobs · adopt-running-window ·
-multi-box view.
+ntfy.sh crash notifications · CPU/RAM per app · scheduled jobs · multi-box view.
 
 ## License
 

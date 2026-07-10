@@ -23,8 +23,13 @@ type Pane struct {
 	PaneID     string `json:"pane_id"` // %n
 	Command    string `json:"command"` // pane_current_command
 	Dead       bool   `json:"dead"`
-	Width      int    `json:"-"`
-	Height     int    `json:"-"`
+	// StartCommand and Path feed the adopt form's prefill: the command the
+	// pane was created with (empty for a plain shell) and its current
+	// working directory.
+	StartCommand string `json:"start_command"`
+	Path         string `json:"path"`
+	Width        int    `json:"-"`
+	Height       int    `json:"-"`
 }
 
 func run(args ...string) (string, error) {
@@ -53,6 +58,7 @@ func ListPanes() ([]Pane, error) {
 		"#{session_name}", "#{window_id}", "#{window_name}",
 		"#{pane_id}", "#{pane_current_command}", "#{pane_dead}",
 		"#{pane_width}", "#{pane_height}",
+		"#{pane_start_command}", "#{pane_current_path}",
 	}, sep)
 	out, err := run("list-panes", "-a", "-F", format)
 	if err != nil {
@@ -65,15 +71,18 @@ func ListPanes() ([]Pane, error) {
 	var panes []Pane
 	for _, line := range strings.Split(out, "\n") {
 		f := strings.Split(line, sep)
-		if len(f) != 8 {
+		if len(f) != 10 {
 			continue
 		}
 		w, _ := strconv.Atoi(f[6])
 		h, _ := strconv.Atoi(f[7])
+		// tmux wraps pane_start_command in double quotes.
+		start := strings.TrimSuffix(strings.TrimPrefix(f[8], `"`), `"`)
 		panes = append(panes, Pane{
 			Session: f[0], WindowID: f[1], WindowName: f[2],
 			PaneID: f[3], Command: f[4], Dead: f[5] == "1",
 			Width: w, Height: h,
+			StartCommand: start, Path: f[9],
 		})
 	}
 	return panes, nil

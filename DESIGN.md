@@ -178,6 +178,10 @@ Deliberately tiny. No SQLite.
 4. Terminal view with input and thumb-sized Restart / Stop / Ctrl-C.
 5. Crash badge + last-words capture + auto-restart with backoff and circuit breaker.
 6. "Killed by Android" detection + restart-all banner.
+7. *(shipped in 0.2)* Adopt: turn an unmanaged window into a managed app. The
+   form prefills from `pane_start_command` / `pane_current_path`; takeover
+   (default) kills the old window and relaunches under the wrapper so the two
+   copies never run concurrently, or save-only leaves the window untouched.
 
 **Deferred to v2:** ntfy.sh crash notifications, resource graphs (CPU/RAM per app),
 cron-style scheduled jobs in the UI, multi-box management, file browser.
@@ -210,6 +214,8 @@ pocket"), `muxa` (best brand if it outgrows tmux internals).
 - Frontend stack: vanilla + a micro-framework (e.g. Preact/Svelte) vs. plain JS.
   Constraint: must fit the "no npm at install time" rule via `embed`, which any of
   these satisfy at build time.
-- Should "adopt" be able to take over a running process (reptyr-style) or only
-  re-wrap on next restart? v1: next restart only.
+- ~~Should "adopt" be able to take over a running process (reptyr-style) or only
+  re-wrap on next restart?~~ Resolved: adopt restarts the command under the
+  wrapper (kill-then-start), never re-parents. reptyr-style attach stays out —
+  it's fragile under proot and the ptrace dance isn't worth the edge cases.
 - Token rotation / revocation UX beyond "delete the file and restart."

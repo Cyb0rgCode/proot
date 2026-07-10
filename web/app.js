@@ -145,6 +145,7 @@ function render() {
         <div class="dot ${p.dead ? "stopped" : "running"}"></div>
         <div class="name">${esc(p.session)} : ${esc(p.window_name)}</div>
         <span class="badge">${esc(p.command)}</span>
+        <div class="btns"><button data-act="adopt" title="Adopt as managed app">Adopt</button></div>
       </div>
     </div>`).join("");
 }
@@ -174,7 +175,13 @@ $("#apps").addEventListener("click", (e) => {
 
 $("#unmanaged").addEventListener("click", (e) => {
   const card = e.target.closest(".card");
-  if (card) openTerm(card.dataset.pane, card.dataset.title, null);
+  if (!card) return;
+  if (e.target.closest("button")?.dataset.act === "adopt") {
+    const p = (snap.unmanaged || []).find((x) => x.pane_id === card.dataset.pane);
+    if (p) openAddModal(p);
+    return;
+  }
+  openTerm(card.dataset.pane, card.dataset.title, null);
 });
 
 $("#btn-restart-killed").addEventListener("click", async () => {
@@ -242,21 +249,57 @@ async function showCrashLog(id) {
 
 /* ---------- new app ---------- */
 
-$("#btn-add").addEventListener("click", () => $("#modal-add").classList.remove("hidden"));
+// The add form does double duty: blank for "new app", prefilled from a
+// pane (with a takeover checkbox) for "adopt window".
+function openAddModal(adoptPane) {
+  const form = $("#form-add");
+  form.reset();
+  form.dataset.adoptPane = adoptPane ? adoptPane.pane_id : "";
+  $("#add-title").textContent = adoptPane ? "Adopt window" : "New app";
+  $("#add-submit").textContent = adoptPane ? "Adopt" : "Create & start";
+  $("#adopt-note").classList.toggle("hidden", !adoptPane);
+  $("#adopt-takeover-row").classList.toggle("hidden", !adoptPane);
+  if (adoptPane) {
+    form.name.value = adoptPane.window_name || "";
+    // start_command is what the window was launched with; a plain shell
+    // has none, so fall back to the foreground command as a hint.
+    form.cmd.value = adoptPane.start_command ||
+      (adoptPane.command && adoptPane.command !== "bash" && adoptPane.command !== "sh"
+        ? adoptPane.command : "");
+    form.cwd.value = adoptPane.path || "";
+    form.takeover.checked = true;
+  }
+  $("#modal-add").classList.remove("hidden");
+}
+
+$("#btn-add").addEventListener("click", () => openAddModal(null));
 
 $("#form-add").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const f = new FormData(e.target);
+  const form = e.target;
+  const f = new FormData(form);
+  const adoptPane = form.dataset.adoptPane;
+  const body = {
+    name: f.get("name"), cmd: f.get("cmd"),
+    cwd: f.get("cwd") || "", autorestart: f.get("autorestart"),
+  };
   try {
-    await api("/api/apps", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: f.get("name"), cmd: f.get("cmd"),
-        cwd: f.get("cwd") || "", autorestart: f.get("autorestart"),
-      }),
-    });
-    e.target.reset();
+    if (adoptPane) {
+      body.pane_id = adoptPane;
+      body.takeover = form.takeover.checked;
+      await api("/api/adopt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } else {
+      await api("/api/apps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
+    form.reset();
     closeModals();
   } catch (err) { alert(err.message); }
 });

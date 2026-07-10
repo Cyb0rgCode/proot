@@ -67,10 +67,12 @@
   </div>
 </div>
 
-<!-- new app modal -->
+<!-- new app / adopt modal -->
 <div id="modal-add" class="overlay hidden">
   <form class="sheet" id="form-add">
-    <h2>New app</h2>
+    <h2 id="add-title">New app</h2>
+    <p id="adopt-note" class="sub hidden">Adopting can't attach to the running
+      process — it saves this app and restarts the command under supervision.</p>
     <label>Name <input name="name" required placeholder="my-bot" autocomplete="off"></label>
     <label>Command <textarea name="cmd" required rows="3"
       placeholder="python3 bot.py&#10;(runs via sh -c, from the working dir)"></textarea></label>
@@ -82,9 +84,13 @@
         <option value="always">always — restart even after clean exits</option>
       </select>
     </label>
+    <label id="adopt-takeover-row" class="check hidden">
+      <input type="checkbox" name="takeover" checked>
+      Replace the running window now (closes it and restarts under proot)
+    </label>
     <div class="row">
       <button type="button" class="ghost" data-close>Cancel</button>
-      <button type="submit" class="primary">Create &amp; start</button>
+      <button type="submit" class="primary" id="add-submit">Create &amp; start</button>
     </div>
   </form>
 </div>
