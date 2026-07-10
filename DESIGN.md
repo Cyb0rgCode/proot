@@ -183,8 +183,13 @@ Deliberately tiny. No SQLite.
    (default) kills the old window and relaunches under the wrapper so the two
    copies never run concurrently, or save-only leaves the window untouched.
 
-**Deferred to v2:** ntfy.sh crash notifications, resource graphs (CPU/RAM per app),
-cron-style scheduled jobs in the UI, multi-box management, file browser.
+**v2 (shipped in 0.3):** ntfy.sh crash notifications (state-file watcher, no tmux
+calls, rate-limited, high priority for crashloop/killed), CPU/RAM per app (one
+/proc pass covering each app's whole process subtree, CPU% from jiffie deltas
+between dashboard ticks), cron scheduled jobs (5-field expressions, fires only
+when the app isn't running, next-run shown on the card).
+
+**Still deferred:** multi-box management, file browser.
 
 Estimated size: ~2,000 lines of Go plus a modest vanilla/lightweight frontend.
 

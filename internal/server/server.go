@@ -23,6 +23,8 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 
 	"proot/internal/config"
+	"proot/internal/notify"
+	"proot/internal/sched"
 	"proot/internal/state"
 	"proot/internal/supervisor"
 	"proot/internal/tmuxctl"
@@ -86,6 +88,11 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("GET /api/apps/{id}/crash", s.auth(s.handleCrashLog))
 	mux.HandleFunc("POST /api/adopt", s.auth(s.handleAdopt))
 	mux.HandleFunc("POST /api/restart-killed", s.auth(s.handleRestartKilled))
+	mux.HandleFunc("GET /api/settings", s.auth(s.handleGetSettings))
+	mux.HandleFunc("PUT /api/settings", s.auth(s.handlePutSettings))
+
+	go notify.New(s.sup.Store).Run()
+	go sched.New(s.sup.Store, s.sup).Run()
 	mux.HandleFunc("GET /api/events", s.auth(s.handleEvents))
 	mux.HandleFunc("GET /api/term", s.auth(s.handleTerm))
 
@@ -181,6 +188,7 @@ type createAppReq struct {
 	Cwd         string            `json:"cwd"`
 	Env         map[string]string `json:"env"`
 	Autorestart string            `json:"autorestart"`
+	Schedule    string            `json:"schedule"`
 	Start       *bool             `json:"start"`
 }
 
@@ -205,6 +213,13 @@ func (s *Server) handleCreateApp(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errors.New("autorestart must be off, on-crash, or always"))
 		return
 	}
+	req.Schedule = strings.TrimSpace(req.Schedule)
+	if req.Schedule != "" {
+		if err := supervisor.ValidateSchedule(req.Schedule); err != nil {
+			writeErr(w, 400, fmt.Errorf("bad schedule: %w", err))
+			return
+		}
+	}
 	id := state.SlugID(req.Name)
 	if _, exists, _ := s.sup.Store.Get(id); exists {
 		writeErr(w, 409, fmt.Errorf("an app with id %q already exists", id))
@@ -212,7 +227,7 @@ func (s *Server) handleCreateApp(w http.ResponseWriter, r *http.Request) {
 	}
 	app := state.App{
 		ID: id, Name: req.Name, Cmd: req.Cmd, Cwd: req.Cwd,
-		Env: req.Env, Autorestart: req.Autorestart,
+		Env: req.Env, Autorestart: req.Autorestart, Schedule: req.Schedule,
 	}
 	if err := s.sup.Store.Upsert(app); err != nil {
 		writeErr(w, 500, err)
@@ -252,6 +267,7 @@ func (s *Server) handlePatchApp(w http.ResponseWriter, r *http.Request) {
 		apply("env", &app.Env),
 		apply("autorestart", &app.Autorestart),
 		apply("pinned", &app.Pinned),
+		apply("schedule", &app.Schedule),
 	); err != nil {
 		writeErr(w, 400, err)
 		return
@@ -259,6 +275,13 @@ func (s *Server) handlePatchApp(w http.ResponseWriter, r *http.Request) {
 	if !validRestart.MatchString(app.Autorestart) {
 		writeErr(w, 400, errors.New("autorestart must be off, on-crash, or always"))
 		return
+	}
+	app.Schedule = strings.TrimSpace(app.Schedule)
+	if app.Schedule != "" {
+		if err := supervisor.ValidateSchedule(app.Schedule); err != nil {
+			writeErr(w, 400, fmt.Errorf("bad schedule: %w", err))
+			return
+		}
 	}
 	if err := s.sup.Store.Upsert(app); err != nil {
 		writeErr(w, 500, err)
@@ -330,12 +353,42 @@ func (s *Server) handleCrashLog(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func (s *Server) handleGetSettings(w http.ResponseWriter, r *http.Request) {
+	settings, err := state.LoadSettings()
+	if err != nil {
+		writeErr(w, 500, err)
+		return
+	}
+	writeJSON(w, 200, settings)
+}
+
+func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
+	var settings state.Settings
+	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+		writeErr(w, 400, err)
+		return
+	}
+	settings.NtfyTopic = strings.TrimSpace(settings.NtfyTopic)
+	if settings.NtfyTopic != "" &&
+		!strings.HasPrefix(settings.NtfyTopic, "http://") &&
+		!strings.HasPrefix(settings.NtfyTopic, "https://") {
+		// Bare topic name → default ntfy.sh server.
+		settings.NtfyTopic = "https://ntfy.sh/" + settings.NtfyTopic
+	}
+	if err := state.SaveSettings(settings); err != nil {
+		writeErr(w, 500, err)
+		return
+	}
+	writeJSON(w, 200, settings)
+}
+
 type adoptReq struct {
 	PaneID      string `json:"pane_id"`
 	Name        string `json:"name"`
 	Cmd         string `json:"cmd"`
 	Cwd         string `json:"cwd"`
 	Autorestart string `json:"autorestart"`
+	Schedule    string `json:"schedule"`
 	// Takeover (default true) kills the adopted window and relaunches the
 	// command under the wrapper right away. False stores the definition
 	// only and leaves the window running unsupervised until you start it.
@@ -387,9 +440,16 @@ func (s *Server) handleAdopt(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 409, fmt.Errorf("an app with id %q already exists", id))
 		return
 	}
+	req.Schedule = strings.TrimSpace(req.Schedule)
+	if req.Schedule != "" {
+		if err := supervisor.ValidateSchedule(req.Schedule); err != nil {
+			writeErr(w, 400, fmt.Errorf("bad schedule: %w", err))
+			return
+		}
+	}
 	app := state.App{
 		ID: id, Name: req.Name, Cmd: req.Cmd, Cwd: req.Cwd,
-		Autorestart: req.Autorestart,
+		Autorestart: req.Autorestart, Schedule: req.Schedule,
 	}
 	if err := s.sup.Store.Upsert(app); err != nil {
 		writeErr(w, 500, err)

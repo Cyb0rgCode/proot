@@ -151,3 +151,5 @@ section h2 {
   .overlay { align-items: center; }
   .sheet { border-radius: 16px; }
 }
+.sheet p.sub a { color: var(--blue); }
+#btn-settings { padding: 8px 11px; }

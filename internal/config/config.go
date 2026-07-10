@@ -29,6 +29,7 @@ func Dir() string {
 }
 
 func AppsFile() string             { return filepath.Join(Dir(), "apps.json") }
+func SettingsFile() string         { return filepath.Join(Dir(), "config.json") }
 func TokenFile() string            { return filepath.Join(Dir(), "token") }
 func StateDir() string             { return filepath.Join(Dir(), "state") }
 func PipeDir() string              { return filepath.Join(Dir(), "pipe") }

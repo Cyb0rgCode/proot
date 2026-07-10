@@ -33,6 +33,35 @@ type App struct {
 	Env         map[string]string `json:"env,omitempty"`
 	Autorestart string            `json:"autorestart"` // "off" | "on-crash" | "always"
 	Pinned      bool              `json:"pinned,omitempty"`
+	// Schedule is an optional 5-field cron expression; the agent starts
+	// the app at each firing if it isn't already running.
+	Schedule string `json:"schedule,omitempty"`
+}
+
+// Settings is the agent-wide configuration in ~/.proot/config.json.
+type Settings struct {
+	// NtfyTopic is a full ntfy publish URL (e.g. https://ntfy.sh/my-proot).
+	// Empty disables crash notifications.
+	NtfyTopic string `json:"ntfy_topic,omitempty"`
+}
+
+func LoadSettings() (Settings, error) {
+	var st Settings
+	b, err := os.ReadFile(config.SettingsFile())
+	if errors.Is(err, os.ErrNotExist) {
+		return st, nil
+	}
+	if err != nil {
+		return st, err
+	}
+	if err := json.Unmarshal(b, &st); err != nil {
+		return st, fmt.Errorf("config.json is corrupt: %w", err)
+	}
+	return st, nil
+}
+
+func SaveSettings(st Settings) error {
+	return writeJSONAtomic(config.SettingsFile(), st)
 }
 
 // RunState is written by the wrapper as the app runs. One file per app.

@@ -29,6 +29,13 @@ proot marries the two, and adds the one thing nothing else can tell you:
 - **Adopt** — one tap turns a tmux window you started by hand into a supervised app:
   the form prefills from the pane (command, directory) and relaunches it under the
   wrapper — or just saves the definition and leaves the window alone.
+- **Push notifications** — set an [ntfy](https://ntfy.sh) topic in Settings and your
+  phone gets a push when an app crashes (with its last words), enters a crash loop,
+  or is killed by the OS. Self-hostable, no account needed.
+- **CPU & RAM per app** — sampled across each app's whole process tree from `/proc`,
+  live on every card.
+- **Scheduled jobs** — give an app a cron expression (`0 3 * * *`) and proot starts
+  it on schedule if it isn't already running; the card shows the next firing.
 - **Real crash detection** — apps run inside a tiny wrapper that records exit codes,
   keeps the pane alive after a crash (with the error still on screen), and snapshots
   the last 200 lines as a crash log.
@@ -114,9 +121,9 @@ by design: never expose it to the open internet.
 
 Backup = copy the directory.
 
-## Roadmap (v2)
+## Roadmap
 
-ntfy.sh crash notifications · CPU/RAM per app · scheduled jobs · multi-box view.
+multi-box view (one dashboard for several servers) · file browser.
 
 ## License
 

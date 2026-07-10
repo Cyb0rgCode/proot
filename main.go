@@ -45,7 +45,7 @@ func main() {
 		}
 		os.Exit(runner.Main(*id))
 	case "version", "--version", "-v":
-		fmt.Println("proot 0.2.0")
+		fmt.Println("proot 0.3.0")
 	default:
 		usage()
 		os.Exit(2)

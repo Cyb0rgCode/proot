@@ -95,13 +95,31 @@ function esc(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
+function fmtMem(b) {
+  if (b >= 1073741824) return (b / 1073741824).toFixed(1) + " GB";
+  if (b >= 1048576) return Math.round(b / 1048576) + " MB";
+  return Math.round(b / 1024) + " kB";
+}
+
+function fmtNextRun(iso) {
+  const d = new Date(iso), diff = d - Date.now();
+  if (diff < 90000) return "in " + Math.max(1, Math.round(diff / 60000)) + "m";
+  if (diff < 86400000)
+    return "at " + d.toTimeString().slice(0, 5);
+  return "on " + d.toLocaleDateString(undefined, { weekday: "short" }) +
+    " " + d.toTimeString().slice(0, 5);
+}
+
 function appMeta(a) {
   const bits = [];
   if (a.status === "running") bits.push("up " + fmtUptime(a.uptime_sec));
+  if (a.status === "running" && a.mem_bytes > 0)
+    bits.push((a.cpu_percent || 0) + "% cpu", fmtMem(a.mem_bytes));
   if (a.status === "crashed" && a.exit_code != null) bits.push("exit " + a.exit_code);
   if (a.signal) bits.push(a.signal);
   if (a.restart_count > 0) bits.push("↻ " + a.restart_count);
   if (a.autorestart !== "off") bits.push("auto: " + a.autorestart);
+  if (a.next_run) bits.push("⏰ " + fmtNextRun(a.next_run));
   return bits.join(" · ");
 }
 
@@ -282,6 +300,7 @@ $("#form-add").addEventListener("submit", async (e) => {
   const body = {
     name: f.get("name"), cmd: f.get("cmd"),
     cwd: f.get("cwd") || "", autorestart: f.get("autorestart"),
+    schedule: (f.get("schedule") || "").trim(),
   };
   try {
     if (adoptPane) {
@@ -300,6 +319,29 @@ $("#form-add").addEventListener("submit", async (e) => {
       });
     }
     form.reset();
+    closeModals();
+  } catch (err) { alert(err.message); }
+});
+
+/* ---------- settings ---------- */
+
+$("#btn-settings").addEventListener("click", async () => {
+  try {
+    const res = await api("/api/settings");
+    const st = await res.json();
+    $("#form-settings").ntfy_topic.value = st.ntfy_topic || "";
+    $("#modal-settings").classList.remove("hidden");
+  } catch (e) { alert(e.message); }
+});
+
+$("#form-settings").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await api("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ntfy_topic: e.target.ntfy_topic.value.trim() }),
+    });
     closeModals();
   } catch (err) { alert(err.message); }
 });

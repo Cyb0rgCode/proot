@@ -11,6 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"proot/internal/procstat"
+
+	"github.com/robfig/cron/v3"
+
 	"proot/internal/config"
 	"proot/internal/state"
 	"proot/internal/tmuxctl"
@@ -41,6 +45,9 @@ type AppStatus struct {
 	RestartCount int        `json:"restart_count"`
 	HasCrashLog  bool       `json:"has_crash_log"`
 	LastLine     string     `json:"last_line,omitempty"`
+	CPUPercent   float64    `json:"cpu_percent,omitempty"`
+	MemBytes     int64      `json:"mem_bytes,omitempty"`
+	NextRun      *time.Time `json:"next_run,omitempty"`
 }
 
 type Snapshot struct {
@@ -53,8 +60,9 @@ type Snapshot struct {
 }
 
 type Supervisor struct {
-	Store *state.Store
-	Exe   string // path to the proot binary, for wrapper invocations
+	Store   *state.Store
+	Exe     string // path to the proot binary, for wrapper invocations
+	sampler *procstat.Sampler
 }
 
 func New() (*Supervisor, error) {
@@ -62,7 +70,11 @@ func New() (*Supervisor, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Supervisor{Store: state.NewStore(), Exe: exe}, nil
+	return &Supervisor{
+		Store:   state.NewStore(),
+		Exe:     exe,
+		sampler: procstat.NewSampler(),
+	}, nil
 }
 
 func pidAlive(pid int) bool {
@@ -105,7 +117,16 @@ func (s *Supervisor) Snapshot(withLastLine bool) (*Snapshot, error) {
 				st.LastLine = lastNonEmptyLine(out)
 			}
 		}
+		if app.Schedule != "" {
+			if sched, err := cronParser.Parse(app.Schedule); err == nil {
+				next := sched.Next(snap.Time)
+				st.NextRun = &next
+			}
+		}
 		snap.Apps = append(snap.Apps, st)
+	}
+	if withLastLine {
+		s.sampleResources(snap)
 	}
 	sort.Slice(snap.Apps, func(i, j int) bool {
 		if snap.Apps[i].Pinned != snap.Apps[j].Pinned {
@@ -119,6 +140,36 @@ func (s *Supervisor) Snapshot(withLastLine bool) (*Snapshot, error) {
 		}
 	}
 	return snap, nil
+}
+
+// cronParser accepts standard 5-field cron expressions.
+var cronParser = cron.NewParser(
+	cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+
+// ValidateSchedule reports whether expr is an acceptable app schedule.
+func ValidateSchedule(expr string) error {
+	_, err := cronParser.Parse(expr)
+	return err
+}
+
+// sampleResources fills CPU/RAM for every running app in one /proc pass.
+func (s *Supervisor) sampleResources(snap *Snapshot) {
+	var roots []int
+	for _, a := range snap.Apps {
+		if a.Status == StatusRunning && a.PID > 0 {
+			roots = append(roots, a.PID)
+		}
+	}
+	if len(roots) == 0 {
+		return
+	}
+	usage := s.sampler.Sample(roots)
+	for i := range snap.Apps {
+		if u, ok := usage[snap.Apps[i].PID]; ok && snap.Apps[i].Status == StatusRunning {
+			snap.Apps[i].CPUPercent = float64(int(u.CPUPercent*10)) / 10
+			snap.Apps[i].MemBytes = u.MemBytes
+		}
+	}
 }
 
 func (s *Supervisor) appStatus(app state.App, paneByID map[string]tmuxctl.Pane) AppStatus {
