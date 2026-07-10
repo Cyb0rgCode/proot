@@ -46,8 +46,11 @@
   </section>
 </main>
 
-<!-- terminal overlay -->
+<!-- terminal overlay: #term-view stays fullscreen and opaque (blocks the
+     dashboard behind it); #term-box is the column that shrinks to the
+     visual viewport when the phone keyboard opens -->
 <div id="term-view" class="overlay hidden">
+<div id="term-box">
   <div class="term-head">
     <button id="term-back">‹ Back</button>
     <div id="term-title"></div>
@@ -66,6 +69,7 @@
     <button data-key="C-c" class="danger">^C</button>
     <button id="term-menu">⋮</button>
   </div>
+</div>
 </div>
 
 <!-- new app / adopt modal -->

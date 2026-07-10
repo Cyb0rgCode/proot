@@ -423,20 +423,22 @@ function onWinResize() {
 
 /* Phone keyboards overlay the page instead of resizing it, which would
  * leave the key bar hidden behind the keyboard. While the terminal is
- * open, pin the overlay to the *visual* viewport: shrink it to the
- * visible height and follow its offset, so the key bar always sits
- * directly above the keyboard. */
+ * open, the inner column (#term-box) tracks the *visual* viewport —
+ * shrinking to the visible height so the key bar sits directly above
+ * the keyboard — while #term-view itself stays fullscreen and opaque,
+ * so the dashboard behind it is never visible or tappable. */
 function syncTermViewport() {
   const vv = window.visualViewport;
-  const tv = $("#term-view");
-  if (!vv || tv.classList.contains("hidden")) return;
-  tv.style.height = vv.height + "px";
-  tv.style.top = vv.offsetTop + "px";
+  if (!vv || $("#term-view").classList.contains("hidden")) return;
+  const box = $("#term-box");
+  box.style.height = vv.height + "px";
+  box.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : "";
   clearTimeout(syncTermViewport._t);
   syncTermViewport._t = setTimeout(() => { if (fit) { fit.fit(); sendResize(); } }, 80);
 }
 
 function attachViewportSync() {
+  document.documentElement.classList.add("term-open");
   if (!window.visualViewport) return;
   visualViewport.addEventListener("resize", syncTermViewport);
   visualViewport.addEventListener("scroll", syncTermViewport);
@@ -444,12 +446,13 @@ function attachViewportSync() {
 }
 
 function detachViewportSync() {
+  document.documentElement.classList.remove("term-open");
   if (!window.visualViewport) return;
   visualViewport.removeEventListener("resize", syncTermViewport);
   visualViewport.removeEventListener("scroll", syncTermViewport);
-  const tv = $("#term-view");
-  tv.style.height = "";
-  tv.style.top = "";
+  const box = $("#term-box");
+  box.style.height = "";
+  box.style.transform = "";
 }
 
 function sendResize() {
