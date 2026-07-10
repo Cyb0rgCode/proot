@@ -1,6 +1,6 @@
 /* proot demo mode — simulates the agent entirely in the browser.
  *
- * Loaded ONLY on the GitHub Pages demo (the deploy workflow injects this
+ * Loaded ONLY on the GitHub Pages demo (https://cyb0rgcode.github.io/proot/) (the deploy workflow injects this
  * script before app.js); a real proot install never serves it. It replaces
  * fetch() for /api/* and WebSocket for the events/terminal sockets with an
  * in-memory fake agent, so the UI behaves like the real thing: apps run,
