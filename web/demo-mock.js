@@ -1,7 +1,7 @@
-/* proot demo mode — simulates the agent entirely in the browser.
+/* phoned demo mode — simulates the agent entirely in the browser.
  *
  * Loaded ONLY on the GitHub Pages demo (https://cyb0rgcode.github.io/proot/) (the deploy workflow injects this
- * script before app.js); a real proot install never serves it. It replaces
+ * script before app.js); a real phoned install never serves it. It replaces
  * fetch() for /api/* and WebSocket for the events/terminal sockets with an
  * in-memory fake agent, so the UI behaves like the real thing: apps run,
  * crash, restart, get adopted, and stream terminal output.
@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-localStorage.setItem("proot_token", "demo"); // skip the token gate
+localStorage.setItem("phoned_token", "demo"); // skip the token gate
 
 /* ---------- fake box state ---------- */
 
@@ -55,7 +55,7 @@ const unmanaged = [
 let settings = { ntfy_topic: "" };
 
 const CRASH_LOG = `# webhook crashed at ${iso(now())}
-[proot] starting webhook: ./server --port 3000
+[phoned] starting webhook: ./server --port 3000
 listening on :3000
 POST /hook 200 12ms
 POST /hook 200 9ms
@@ -65,7 +65,7 @@ panic: connection refused (db)
 goroutine 1 [running]:
 main.mustDB(...)
 \t/root/hooks/main.go:44
-[proot] crashed (code 1) — restarting in 16s (r = now, q = close)`;
+[phoned] crashed (code 1) — restarting in 16s (r = now, q = close)`;
 
 function snapshot() {
   const t = Date.now();
@@ -202,9 +202,9 @@ class DemoWS {
     const app = Object.values(apps).find((a) => a.pane_id === pane);
     const send = (s) => this.onmessage &&
       this.onmessage({ data: JSON.stringify({ t: "data", data: s }) });
-    send(`\x1b[2m[proot demo] simulated terminal — this pane is fake, the UI is real\x1b[0m\r\n`);
+    send(`\x1b[2m[phoned demo] simulated terminal — this pane is fake, the UI is real\x1b[0m\r\n`);
     if (app && app.status === "running" && app.lines) {
-      send(`[proot] starting ${app.id}: ${app.cmd}\r\n`);
+      send(`[phoned] starting ${app.id}: ${app.cmd}\r\n`);
       this._timers.push(setInterval(() => send(app.lines() + "\r\n"), 1500));
     } else if (app && app.status === "crashloop") {
       send(CRASH_LOG.replace(/\n/g, "\r\n") + "\r\n");
@@ -217,7 +217,7 @@ class DemoWS {
     const reply = (s) => this.onmessage &&
       this.onmessage({ data: JSON.stringify({ t: "data", data: s }) });
     if (msg.t === "input") {
-      reply(msg.data === "\r" ? "\r\ndemo: commands aren't executed here — install proot for the real thing\r\nroot@phone:~# " : msg.data);
+      reply(msg.data === "\r" ? "\r\ndemo: commands aren't executed here — install phoned for the real thing\r\nroot@phone:~# " : msg.data);
     }
     if (msg.t === "key" && msg.key === "C-c") reply("^C\r\nroot@phone:~# ");
   }
@@ -236,7 +236,7 @@ window.WebSocket = function (url, protos) {
 addEventListener("DOMContentLoaded", () => {
   const bar = document.createElement("div");
   bar.innerHTML = `▶ Live demo with <b>simulated data</b> — everything you click works,
-    nothing is real. <a href="https://github.com/Cyb0rgCode/proot">Install proot →</a>`;
+    nothing is real. <a href="https://github.com/Cyb0rgCode/proot">Install phoned →</a>`;
   bar.style.cssText = "background:#1a2f52;color:#e6edf3;padding:8px 14px;" +
     "font-size:13px;text-align:center;border-bottom:1px solid #2d333b";
   bar.querySelector("a").style.color = "#58a6ff";

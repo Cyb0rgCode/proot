@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0d1117">
-<title>proot</title>
+<title>phoned</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vendor/xterm.css">
@@ -13,7 +13,7 @@
 <body>
 
 <header>
-  <h1>pr<span>oot</span></h1>
+  <h1>phone<span>d</span></h1>
   <div id="conn" class="pill off">connecting…</div>
   <button id="btn-settings" title="Settings">⚙</button>
   <button id="btn-add" class="primary">＋ App</button>
@@ -21,7 +21,7 @@
 
 <div id="gate" class="hidden">
   <h2>Locked</h2>
-  <p>Open proot using the tokened link printed by <code>proot serve</code>
+  <p>Open phoned using the tokened link printed by <code>phoned serve</code>
      (it looks like <code>http://…/#t=…</code>), or paste the token:</p>
   <form id="gate-form"><input id="gate-token" placeholder="token" autocomplete="off">
   <button class="primary">Unlock</button></form>
@@ -93,7 +93,7 @@
       autocomplete="off" spellcheck="false"></label>
     <label id="adopt-takeover-row" class="check hidden">
       <input type="checkbox" name="takeover" checked>
-      Replace the running window now (closes it and restarts under proot)
+      Replace the running window now (closes it and restarts under phoned)
     </label>
     <div class="row">
       <button type="button" class="ghost" data-close>Cancel</button>
@@ -126,10 +126,10 @@
   <form class="sheet" id="form-settings">
     <h2>Settings</h2>
     <label>ntfy topic for crash alerts
-      <input name="ntfy_topic" placeholder="my-proot-alerts  (or a full https://… URL)"
+      <input name="ntfy_topic" placeholder="my-phoned-alerts  (or a full https://… URL)"
         autocomplete="off" spellcheck="false">
     </label>
-    <p class="sub">proot will push a notification when an app crashes, enters a
+    <p class="sub">phoned will push a notification when an app crashes, enters a
       crash loop, or is killed by the OS. Get the <a href="https://ntfy.sh"
       target="_blank" rel="noreferrer">ntfy app</a>, subscribe to the same topic,
       done. Leave empty to disable.</p>

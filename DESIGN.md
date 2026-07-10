@@ -1,8 +1,7 @@
-# proot — Design Document
+# phoned — Design Document
 
-> Named after its home: the repo (and the proot-distro environment it's built for).
-> Developed under the working name `muxboard`; alternatives considered: `pocketd`,
-> `muxa`. See [Naming](#naming).
+> *phoned* — your phone, daemonized. Third and final name: developed as `muxboard`,
+> briefly `proot`. See [Naming](#naming).
 
 **One-liner:** pm2's dashboard with tmux's interactivity — a web control panel for
 everything running on your phone server (or any Linux box), installable in one command,
@@ -40,7 +39,7 @@ Phone/PC browser (PWA: dashboard + xterm.js)
         │  HTTPS + WebSocket (bearer token)
 Tailscale / cloudflared / SSH tunnel     ← "access from anywhere", not our code
         │
-proot agent (single Go binary, runs inside proot)
+phoned agent (single Go binary, runs inside proot)
         │  tmux control mode (-C), pipe-pane, send-keys, capture-pane
 tmux server ── one window per app ── wrapper ── user's program
 ```
@@ -76,12 +75,12 @@ tmux server ── one window per app ── wrapper ── user's program
 Every managed app runs inside a wrapper, not bare:
 
 ```
-tmux new-window -n myapp 'proot run --id myapp -- python bot.py'
+tmux new-window -n myapp 'phoned run --id myapp -- python bot.py'
 ```
 
-`proot run` (same binary, subcommand):
+`phoned run` (same binary, subcommand):
 
-- On launch: writes `~/.proot/state/myapp.json` → `{pid, started_at}`.
+- On launch: writes `~/.phoned/state/myapp.json` → `{pid, started_at}`.
 - Runs the child, waits, then records `{exit_code, signal, ended_at}`.
 - **Keeps the pane alive after exit**, showing
   `exited (code 1) — press r to restart` — instead of the pane vanishing along
@@ -155,9 +154,9 @@ This is remote code execution by design. Non-negotiable floor:
 
 Deliberately tiny. No SQLite.
 
-- `~/.proot/apps.json` — `[{id, name, cmd, cwd, env, autorestart, pinned}]`.
+- `~/.phoned/apps.json` — `[{id, name, cmd, cwd, env, autorestart, pinned}]`.
   Editable over SSH when the UI is broken; backup = copy one file.
-- `~/.proot/state/<id>.json` — runtime state, written by the wrapper.
+- `~/.phoned/state/<id>.json` — runtime state, written by the wrapper.
   The state dir is the API's source of truth, so wrapper and agent stay decoupled:
   agent dies, wrappers keep recording faithfully.
 
@@ -167,12 +166,12 @@ Deliberately tiny. No SQLite.
    plain Linux and does the right thing for each: drop the binary, ensure tmux,
    set up the Termux side (wake-lock, battery-exemption prompt, Termux:Boot hook)
    when applicable, print the URL + QR.
-2. **Zero config to first screen.** `proot serve` → QR code in the terminal →
+2. **Zero config to first screen.** `phoned serve` → QR code in the terminal →
    scan → dashboard. That moment is the README GIF that sells the project.
 
 ## v1 scope
 
-1. `proot serve` — agent + embedded UI, QR + token on first run.
+1. `phoned serve` — agent + embedded UI, QR + token on first run.
 2. Read-only dashboard of all tmux windows (managed and not) with live status.
 3. "New app" form (name, command, workdir, autorestart) → managed tmux window.
 4. Terminal view with input and thumb-sized Restart / Stop / Ctrl-C.
@@ -204,15 +203,19 @@ Estimated size: ~2,000 lines of Go plus a modest vanilla/lightweight frontend.
 
 ## Naming
 
-Final name: **`proot`** — matches the repo and the environment it's built for
-(proot-distro on Termux). Trade-off accepted deliberately: it collides with the
-name of the proot emulator itself, but the emulator lives on the Termux side of
-the wall while this binary lives inside the distro, so they never share a PATH
-in the primary deployment.
+Final name: **`phoned`** — your phone, daemonized. Reads as "phone-dee" (the
+Unix daemon convention: sshd, systemd, phoned) and tells the story in one word.
+Availability-checked: the only prior claim is the DECnet `phoned(8)` chat
+daemon from 1980s netkit, long dead; no modern project uses the name. The
+past-tense reading ("she phoned") is accepted as a feature — it's memorable.
 
-History: developed under the working name `muxboard` (best search
-discoverability). Other candidates: `pocketd` (best story — "a daemon in your
-pocket"), `muxa` (best brand if it outgrows tmux internals).
+History:
+- `muxboard` (development name — best search discoverability for "tmux dashboard")
+- `proot` (brief; matched the repo, but collided with the proot emulator that
+  powers proot-distro — confusing precisely for our primary audience)
+- Rejected: `pockethost` (taken — PocketBase hosting platform), `pocketd`
+  (taken — Pocket Network blockchain node daemon), `handserver` (free but inert),
+  `muxa` (fine brand, weaker story).
 
 ## Open questions
 

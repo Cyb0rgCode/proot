@@ -1,4 +1,4 @@
-// Package state owns proot's two persistence surfaces: the app
+// Package state owns phoned's two persistence surfaces: the app
 // definitions in apps.json and the per-app runtime state files.
 //
 // Write discipline (this is what keeps the design race-free):
@@ -21,10 +21,10 @@ import (
 	"sync"
 	"time"
 
-	"proot/internal/config"
+	"phoned/internal/config"
 )
 
-// App is a user-defined program proot manages.
+// App is a user-defined program phoned manages.
 type App struct {
 	ID          string            `json:"id"`
 	Name        string            `json:"name"`
@@ -38,9 +38,9 @@ type App struct {
 	Schedule string `json:"schedule,omitempty"`
 }
 
-// Settings is the agent-wide configuration in ~/.proot/config.json.
+// Settings is the agent-wide configuration in ~/.phoned/config.json.
 type Settings struct {
-	// NtfyTopic is a full ntfy publish URL (e.g. https://ntfy.sh/my-proot).
+	// NtfyTopic is a full ntfy publish URL (e.g. https://ntfy.sh/my-alerts).
 	// Empty disables crash notifications.
 	NtfyTopic string `json:"ntfy_topic,omitempty"`
 }

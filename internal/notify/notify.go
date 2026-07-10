@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"proot/internal/config"
-	"proot/internal/state"
+	"phoned/internal/config"
+	"phoned/internal/state"
 )
 
 const (
@@ -126,7 +126,7 @@ func (n *Notifier) compose(app state.App, status string) (title, body, prio stri
 	rs, _ := state.ReadRunState(app.ID)
 	switch status {
 	case "crashloop":
-		title = fmt.Sprintf("%s is crash-looping — proot gave up", app.Name)
+		title = fmt.Sprintf("%s is crash-looping — phoned gave up", app.Name)
 		prio = "high"
 	case "killed":
 		title = fmt.Sprintf("%s was killed by the OS", app.Name)

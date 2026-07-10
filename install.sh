@@ -1,5 +1,5 @@
 #!/bin/sh
-# proot installer — one line, no build tools needed:
+# phoned installer — one line, no build tools needed:
 #
 #   curl -fsSL https://raw.githubusercontent.com/Cyb0rgCode/proot/main/install.sh | sh
 #
@@ -9,16 +9,16 @@
 set -eu
 
 OWNER_REPO="Cyb0rgCode/proot"
-BIN_DIR="${PROOT_BIN_DIR:-$HOME/.local/bin}"
+BIN_DIR="${PHONED_BIN_DIR:-$HOME/.local/bin}"
 
-say() { printf '\033[1m[proot]\033[0m %s\n' "$*"; }
-die() { printf '\033[31m[proot]\033[0m %s\n' "$*" >&2; exit 1; }
+say() { printf '\033[1m[phoned]\033[0m %s\n' "$*"; }
+die() { printf '\033[31m[phoned]\033[0m %s\n' "$*" >&2; exit 1; }
 
 command -v curl >/dev/null 2>&1 || die "curl is required."
 
-# --- Termux guard: proot runs INSIDE a distro, not in the Termux shell ----
+# --- Termux guard: phoned runs INSIDE a distro, not in the Termux shell ---
 if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in *com.termux*) true;; *) false;; esac; then
-    say "You're in the Termux shell itself. proot is designed to run INSIDE a"
+    say "You're in the Termux shell itself. phoned is designed to run INSIDE a"
     say "proot-distro (where your apps and tmux live). Do this instead:"
     say "    pkg install proot-distro"
     say "    proot-distro install debian"
@@ -31,7 +31,7 @@ if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in *com.termux*) true;; *)
     exit 0
 fi
 
-command -v tmux >/dev/null 2>&1 || say "WARNING: tmux not found — install it (apt install tmux) before running proot."
+command -v tmux >/dev/null 2>&1 || say "WARNING: tmux not found — install it (apt install tmux) before running phoned."
 
 # --- pick architecture ------------------------------------------------------
 case "$(uname -m)" in
@@ -46,9 +46,9 @@ trap 'rm -rf "$TMP"' EXIT
 
 fetched=""
 if [ -n "$ARCH" ]; then
-    URL="https://github.com/$OWNER_REPO/releases/latest/download/proot-linux-$ARCH"
+    URL="https://github.com/$OWNER_REPO/releases/latest/download/phoned-linux-$ARCH"
     say "downloading latest release for linux-$ARCH..."
-    if curl -fsSL -o "$TMP/proot" "$URL"; then
+    if curl -fsSL -o "$TMP/phoned" "$URL"; then
         fetched=1
     else
         say "no release binary available yet — will try building from source."
@@ -60,12 +60,12 @@ if [ -z "$fetched" ]; then
     command -v git >/dev/null 2>&1 || die "git is required to build from source."
     say "building from source..."
     git clone --depth 1 "https://github.com/$OWNER_REPO" "$TMP/src" >/dev/null 2>&1 || die "git clone failed"
-    (cd "$TMP/src" && go build -ldflags "-s -w" -o "$TMP/proot" .) || die "build failed"
+    (cd "$TMP/src" && go build -ldflags "-s -w" -o "$TMP/phoned" .) || die "build failed"
 fi
 
 mkdir -p "$BIN_DIR"
-install -m 0755 "$TMP/proot" "$BIN_DIR/proot"
-say "installed to $BIN_DIR/proot"
+install -m 0755 "$TMP/phoned" "$BIN_DIR/phoned"
+say "installed to $BIN_DIR/phoned"
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -73,6 +73,6 @@ case ":$PATH:" in
 esac
 
 say ""
-say "Start it with:   proot serve"
+say "Start it with:   phoned serve"
 say "Then open the printed link (or scan the QR) from your phone or PC."
 say "For access from anywhere, put it behind Tailscale or an SSH tunnel."

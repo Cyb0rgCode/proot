@@ -1,6 +1,6 @@
 {
-  "name": "proot",
-  "short_name": "proot",
+  "name": "phoned",
+  "short_name": "phoned",
   "description": "A web dashboard for everything running in tmux, from your phone",
   "start_url": "/",
   "display": "standalone",

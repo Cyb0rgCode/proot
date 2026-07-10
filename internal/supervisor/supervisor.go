@@ -11,13 +11,13 @@ import (
 	"syscall"
 	"time"
 
-	"proot/internal/procstat"
+	"phoned/internal/procstat"
 
 	"github.com/robfig/cron/v3"
 
-	"proot/internal/config"
-	"proot/internal/state"
-	"proot/internal/tmuxctl"
+	"phoned/internal/config"
+	"phoned/internal/state"
+	"phoned/internal/tmuxctl"
 )
 
 // Status values surfaced to the UI.
@@ -61,7 +61,7 @@ type Snapshot struct {
 
 type Supervisor struct {
 	Store   *state.Store
-	Exe     string // path to the proot binary, for wrapper invocations
+	Exe     string // path to the phoned binary, for wrapper invocations
 	sampler *procstat.Sampler
 }
 
@@ -266,7 +266,7 @@ func (s *Supervisor) Start(id string) error {
 	}
 	// --dir pins the wrapper to the agent's state directory: the window
 	// inherits env from the tmux server, which may have been started by a
-	// user shell with a different (or no) PROOT_DIR.
+	// user shell with a different (or no) PHONED_DIR.
 	_, _, err = tmuxctl.NewWindow(config.SessionName, app.ID,
 		[]string{s.Exe, "run", "--id", app.ID, "--dir", config.Dir()})
 	return err

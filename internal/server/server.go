@@ -1,4 +1,4 @@
-// Package server exposes proot's web UI and API: bearer-token auth,
+// Package server exposes phoned's web UI and API: bearer-token auth,
 // a status/CRUD API, a status event stream, and interactive terminals
 // bridged to tmux panes over websockets.
 package server
@@ -22,12 +22,12 @@ import (
 	"github.com/gorilla/websocket"
 	qrcode "github.com/skip2/go-qrcode"
 
-	"proot/internal/config"
-	"proot/internal/notify"
-	"proot/internal/sched"
-	"proot/internal/state"
-	"proot/internal/supervisor"
-	"proot/internal/tmuxctl"
+	"phoned/internal/config"
+	"phoned/internal/notify"
+	"phoned/internal/sched"
+	"phoned/internal/state"
+	"phoned/internal/supervisor"
+	"phoned/internal/tmuxctl"
 )
 
 type Server struct {
@@ -115,7 +115,7 @@ func (s *Server) printWelcome(a *net.TCPAddr) {
 		urls = append(urls, fmt.Sprintf("http://%s/#t=%s", a.String(), s.token))
 	}
 	fmt.Println()
-	fmt.Println("  proot is up. Open on this machine:")
+	fmt.Println("  phoned is up. Open on this machine:")
 	fmt.Println("    " + urls[0])
 	if len(urls) > 1 {
 		fmt.Println("  Or scan from your phone (same network):")
@@ -410,7 +410,7 @@ func (s *Server) handleAdopt(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 404, errors.New("pane not found"))
 		return
 	}
-	// Refuse to adopt a window proot already manages.
+	// Refuse to adopt a window phoned already manages.
 	if apps, err := s.sup.Store.Load(); err == nil {
 		for _, a := range apps {
 			if rs, _ := state.ReadRunState(a.ID); rs != nil && rs.WindowID == pane.WindowID {

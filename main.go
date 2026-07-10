@@ -1,7 +1,7 @@
-// proot — pm2's dashboard with tmux's interactivity.
+// phoned — pm2's dashboard with tmux's interactivity.
 //
-//	proot serve [--listen 127.0.0.1:8689]   start the agent + web UI
-//	proot run --id <id>                     internal: app wrapper (run by tmux)
+//	phoned serve [--listen 127.0.0.1:8689]   start the agent + web UI
+//	phoned run --id <id>                     internal: app wrapper (run by tmux)
 package main
 
 import (
@@ -11,8 +11,8 @@ import (
 	"io/fs"
 	"os"
 
-	"proot/internal/runner"
-	"proot/internal/server"
+	"phoned/internal/runner"
+	"phoned/internal/server"
 )
 
 //go:embed web
@@ -32,20 +32,20 @@ func main() {
 			"address to listen on (use 0.0.0.0:8689 to expose on the LAN)")
 		fs.Parse(os.Args[2:])
 		if err := serve(*listen); err != nil {
-			fmt.Fprintln(os.Stderr, "proot:", err)
+			fmt.Fprintln(os.Stderr, "phoned:", err)
 			os.Exit(1)
 		}
 	case "run":
 		fs := flag.NewFlagSet("run", flag.ExitOnError)
 		id := fs.String("id", "", "app id (from apps.json)")
-		dir := fs.String("dir", "", "proot state directory (overrides PROOT_DIR)")
+		dir := fs.String("dir", "", "phoned state directory (overrides PHONED_DIR)")
 		fs.Parse(os.Args[2:])
 		if *dir != "" {
-			os.Setenv("PROOT_DIR", *dir)
+			os.Setenv("PHONED_DIR", *dir)
 		}
 		os.Exit(runner.Main(*id))
 	case "version", "--version", "-v":
-		fmt.Println("proot 0.3.0")
+		fmt.Println("phoned 0.4.0")
 	default:
 		usage()
 		os.Exit(2)
@@ -65,9 +65,9 @@ func serve(listen string) error {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, `proot — a web dashboard for everything running in tmux
+	fmt.Fprintln(os.Stderr, `phoned — a web dashboard for everything running in tmux
 
 usage:
-  proot serve [--listen ADDR]   start the agent and web UI (default `+defaultListen+`)
-  proot version                 print version`)
+  phoned serve [--listen ADDR]   start the agent and web UI (default `+defaultListen+`)
+  phoned version                 print version`)
 }

@@ -1,5 +1,5 @@
-BINARY  := proot
-VERSION := 0.3.0
+BINARY  := phoned
+VERSION := 0.4.0
 LDFLAGS := -s -w
 
 .PHONY: build run test vet fmt cross clean

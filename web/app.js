@@ -1,4 +1,4 @@
-/* proot frontend — vanilla JS, no build step. */
+/* phoned frontend — vanilla JS, no build step. */
 (() => {
 "use strict";
 
@@ -11,10 +11,10 @@ let token = "";
   const m = location.hash.match(/[#&]t=([0-9a-f]+)/i);
   if (m) {
     token = m[1];
-    localStorage.setItem("proot_token", token);
+    localStorage.setItem("phoned_token", token);
     history.replaceState(null, "", location.pathname); // don't leave it in the URL bar
   } else {
-    token = localStorage.getItem("proot_token") || "";
+    token = localStorage.getItem("phoned_token") || "";
   }
 }
 
@@ -26,7 +26,7 @@ function showGate() {
 $("#gate-form").addEventListener("submit", (e) => {
   e.preventDefault();
   token = $("#gate-token").value.trim();
-  localStorage.setItem("proot_token", token);
+  localStorage.setItem("phoned_token", token);
   location.reload();
 });
 

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"proot/internal/config"
-	"proot/internal/tmuxctl"
+	"phoned/internal/config"
+	"phoned/internal/tmuxctl"
 )
 
 // termStreams multiplexes live pane output to any number of websocket
