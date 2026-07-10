@@ -1,4 +1,4 @@
-// Package tmuxctl wraps the tmux CLI. muxboard never replaces tmux — it
+// Package tmuxctl wraps the tmux CLI. proot never replaces tmux — it
 // orchestrates it, so a user can always `tmux attach` as a fallback.
 package tmuxctl
 

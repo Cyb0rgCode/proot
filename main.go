@@ -1,7 +1,7 @@
-// muxboard — pm2's dashboard with tmux's interactivity.
+// proot — pm2's dashboard with tmux's interactivity.
 //
-//	muxboard serve [--listen 127.0.0.1:8689]   start the agent + web UI
-//	muxboard run --id <id>                     internal: app wrapper (run by tmux)
+//	proot serve [--listen 127.0.0.1:8689]   start the agent + web UI
+//	proot run --id <id>                     internal: app wrapper (run by tmux)
 package main
 
 import (
@@ -11,8 +11,8 @@ import (
 	"io/fs"
 	"os"
 
-	"muxboard/internal/runner"
-	"muxboard/internal/server"
+	"proot/internal/runner"
+	"proot/internal/server"
 )
 
 //go:embed web
@@ -32,7 +32,7 @@ func main() {
 			"address to listen on (use 0.0.0.0:8689 to expose on the LAN)")
 		fs.Parse(os.Args[2:])
 		if err := serve(*listen); err != nil {
-			fmt.Fprintln(os.Stderr, "muxboard:", err)
+			fmt.Fprintln(os.Stderr, "proot:", err)
 			os.Exit(1)
 		}
 	case "run":
@@ -41,7 +41,7 @@ func main() {
 		fs.Parse(os.Args[2:])
 		os.Exit(runner.Main(*id))
 	case "version", "--version", "-v":
-		fmt.Println("muxboard 0.1.0")
+		fmt.Println("proot 0.1.0")
 	default:
 		usage()
 		os.Exit(2)
@@ -61,9 +61,9 @@ func serve(listen string) error {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, `muxboard — a web dashboard for everything running in tmux
+	fmt.Fprintln(os.Stderr, `proot — a web dashboard for everything running in tmux
 
 usage:
-  muxboard serve [--listen ADDR]   start the agent and web UI (default `+defaultListen+`)
-  muxboard version                 print version`)
+  proot serve [--listen ADDR]   start the agent and web UI (default `+defaultListen+`)
+  proot version                 print version`)
 }

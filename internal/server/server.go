@@ -1,4 +1,4 @@
-// Package server exposes muxboard's web UI and API: bearer-token auth,
+// Package server exposes proot's web UI and API: bearer-token auth,
 // a status/CRUD API, a status event stream, and interactive terminals
 // bridged to tmux panes over websockets.
 package server
@@ -22,10 +22,10 @@ import (
 	"github.com/gorilla/websocket"
 	qrcode "github.com/skip2/go-qrcode"
 
-	"muxboard/internal/config"
-	"muxboard/internal/state"
-	"muxboard/internal/supervisor"
-	"muxboard/internal/tmuxctl"
+	"proot/internal/config"
+	"proot/internal/state"
+	"proot/internal/supervisor"
+	"proot/internal/tmuxctl"
 )
 
 type Server struct {
@@ -107,7 +107,7 @@ func (s *Server) printWelcome(a *net.TCPAddr) {
 		urls = append(urls, fmt.Sprintf("http://%s/#t=%s", a.String(), s.token))
 	}
 	fmt.Println()
-	fmt.Println("  muxboard is up. Open on this machine:")
+	fmt.Println("  proot is up. Open on this machine:")
 	fmt.Println("    " + urls[0])
 	if len(urls) > 1 {
 		fmt.Println("  Or scan from your phone (same network):")
@@ -386,8 +386,10 @@ type termClientMsg struct {
 
 // Named keys the key bar may send; everything else arrives as raw bytes.
 var allowedKeys = map[string]bool{
-	"Enter": true, "Escape": true, "Tab": true, "BSpace": true,
+	"Enter": true, "Escape": true, "Tab": true, "BTab": true, "BSpace": true,
 	"Up": true, "Down": true, "Left": true, "Right": true,
+	"S-Up": true, "S-Down": true, "S-Left": true, "S-Right": true,
+	"C-Up": true, "C-Down": true, "C-Left": true, "C-Right": true,
 	"PPage": true, "NPage": true, "Home": true, "End": true,
 	"C-c": true, "C-d": true, "C-z": true, "C-l": true, "C-r": true,
 }

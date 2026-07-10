@@ -1,7 +1,7 @@
 {
-  "name": "muxboard",
-  "short_name": "muxboard",
-  "description": "A web dashboard for everything running in tmux",
+  "name": "proot",
+  "short_name": "proot",
+  "description": "A web dashboard for everything running in tmux, from your phone",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1117",

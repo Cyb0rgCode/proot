@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"muxboard/internal/config"
-	"muxboard/internal/tmuxctl"
+	"proot/internal/config"
+	"proot/internal/tmuxctl"
 )
 
 // termStreams multiplexes live pane output to any number of websocket

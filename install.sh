@@ -1,59 +1,71 @@
 #!/bin/sh
-# muxboard installer — proot-distro (Termux), plain Linux, or any box with Go.
+# proot installer — one line, no build tools needed:
 #
 #   curl -fsSL https://raw.githubusercontent.com/Cyb0rgCode/proot/main/install.sh | sh
 #
-# Builds from source (needs go + tmux) and installs to ~/.local/bin.
-# When binary releases exist this script will prefer downloading them.
+# Downloads the latest prebuilt static binary for your architecture
+# (arm64 / amd64 / armv7) and installs it to ~/.local/bin. Falls back to
+# building from source if no release asset matches and Go is available.
 set -eu
 
-REPO="https://github.com/Cyb0rgCode/proot"
-BIN_DIR="${MUXBOARD_BIN_DIR:-$HOME/.local/bin}"
+OWNER_REPO="Cyb0rgCode/proot"
+BIN_DIR="${PROOT_BIN_DIR:-$HOME/.local/bin}"
 
-say()  { printf '\033[1m[muxboard]\033[0m %s\n' "$*"; }
-die()  { printf '\033[31m[muxboard]\033[0m %s\n' "$*" >&2; exit 1; }
+say() { printf '\033[1m[proot]\033[0m %s\n' "$*"; }
+die() { printf '\033[31m[proot]\033[0m %s\n' "$*" >&2; exit 1; }
 
-# --- environment detection -------------------------------------------------
-ENV_KIND="linux"
+command -v curl >/dev/null 2>&1 || die "curl is required."
+
+# --- Termux guard: proot runs INSIDE a distro, not in the Termux shell ----
 if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in *com.termux*) true;; *) false;; esac; then
-    ENV_KIND="termux"
-fi
-if [ -f /proc/sys/kernel/osrelease ] && grep -qi proot /proc/sys/kernel/osrelease 2>/dev/null; then
-    ENV_KIND="proot"
-fi
-say "detected environment: $ENV_KIND"
-
-if [ "$ENV_KIND" = "termux" ]; then
-    say "You're in the Termux shell itself. muxboard is designed to run INSIDE a"
-    say "proot-distro (where your apps and tmux live). Recommended:"
-    say "    pkg install proot-distro && proot-distro install debian"
+    say "You're in the Termux shell itself. proot is designed to run INSIDE a"
+    say "proot-distro (where your apps and tmux live). Do this instead:"
+    say "    pkg install proot-distro"
+    say "    proot-distro install debian"
     say "    proot-distro login debian"
-    say "then run this installer again inside the distro."
-    say "Also set up the Termux side so Android doesn't kill your server:"
-    say "    termux-wake-lock        # hold a wake lock"
-    say "    (and exempt Termux from battery optimization in Android settings)"
+    say "then run this one-liner again inside the distro."
+    say ""
+    say "Also protect it from Android battery management:"
+    say "    termux-wake-lock"
+    say "    (and set Termux to 'Unrestricted' battery use in Android settings)"
     exit 0
 fi
 
-# --- dependencies ----------------------------------------------------------
-command -v tmux >/dev/null 2>&1 || die "tmux is required. Install it first (apt install tmux)."
-command -v go   >/dev/null 2>&1 || die "go is required to build (apt install golang-go, or use a release binary once available)."
+command -v tmux >/dev/null 2>&1 || say "WARNING: tmux not found — install it (apt install tmux) before running proot."
 
-# --- build -----------------------------------------------------------------
+# --- pick architecture ------------------------------------------------------
+case "$(uname -m)" in
+    aarch64|arm64)  ARCH="arm64" ;;
+    x86_64|amd64)   ARCH="amd64" ;;
+    armv7l|armv8l)  ARCH="armv7" ;;
+    *)              ARCH="" ;;
+esac
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-say "fetching source..."
-if command -v git >/dev/null 2>&1; then
-    git clone --depth 1 "$REPO" "$TMP/src" >/dev/null 2>&1 || die "git clone failed"
-else
-    die "git is required (apt install git)."
+
+fetched=""
+if [ -n "$ARCH" ]; then
+    URL="https://github.com/$OWNER_REPO/releases/latest/download/proot-linux-$ARCH"
+    say "downloading latest release for linux-$ARCH..."
+    if curl -fsSL -o "$TMP/proot" "$URL"; then
+        fetched=1
+    else
+        say "no release binary available yet — will try building from source."
+    fi
 fi
-say "building..."
-(cd "$TMP/src" && go build -ldflags "-s -w" -o "$TMP/muxboard" .) || die "build failed"
+
+if [ -z "$fetched" ]; then
+    command -v go  >/dev/null 2>&1 || die "no prebuilt binary and Go not installed. Install Go >= 1.25, or wait for a release."
+    command -v git >/dev/null 2>&1 || die "git is required to build from source."
+    say "building from source..."
+    git clone --depth 1 "https://github.com/$OWNER_REPO" "$TMP/src" >/dev/null 2>&1 || die "git clone failed"
+    (cd "$TMP/src" && go build -ldflags "-s -w" -o "$TMP/proot" .) || die "build failed"
+fi
 
 mkdir -p "$BIN_DIR"
-install -m 0755 "$TMP/muxboard" "$BIN_DIR/muxboard"
-say "installed to $BIN_DIR/muxboard"
+install -m 0755 "$TMP/proot" "$BIN_DIR/proot"
+say "installed to $BIN_DIR/proot"
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -61,6 +73,6 @@ case ":$PATH:" in
 esac
 
 say ""
-say "Start it with:   muxboard serve"
+say "Start it with:   proot serve"
 say "Then open the printed link (or scan the QR) from your phone or PC."
 say "For access from anywhere, put it behind Tailscale or an SSH tunnel."

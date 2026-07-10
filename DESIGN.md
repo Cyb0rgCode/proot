@@ -1,6 +1,8 @@
-# muxboard — Design Document
+# proot — Design Document
 
-> Working name. Alternatives considered: `pocketd`, `muxa`, `prootos`. See [Naming](#naming).
+> Named after its home: the repo (and the proot-distro environment it's built for).
+> Developed under the working name `muxboard`; alternatives considered: `pocketd`,
+> `muxa`. See [Naming](#naming).
 
 **One-liner:** pm2's dashboard with tmux's interactivity — a web control panel for
 everything running on your phone server (or any Linux box), installable in one command,
@@ -38,7 +40,7 @@ Phone/PC browser (PWA: dashboard + xterm.js)
         │  HTTPS + WebSocket (bearer token)
 Tailscale / cloudflared / SSH tunnel     ← "access from anywhere", not our code
         │
-muxboard agent (single Go binary, runs inside proot)
+proot agent (single Go binary, runs inside proot)
         │  tmux control mode (-C), pipe-pane, send-keys, capture-pane
 tmux server ── one window per app ── wrapper ── user's program
 ```
@@ -74,12 +76,12 @@ tmux server ── one window per app ── wrapper ── user's program
 Every managed app runs inside a wrapper, not bare:
 
 ```
-tmux new-window -n myapp 'muxboard run --id myapp -- python bot.py'
+tmux new-window -n myapp 'proot run --id myapp -- python bot.py'
 ```
 
-`muxboard run` (same binary, subcommand):
+`proot run` (same binary, subcommand):
 
-- On launch: writes `~/.muxboard/state/myapp.json` → `{pid, started_at}`.
+- On launch: writes `~/.proot/state/myapp.json` → `{pid, started_at}`.
 - Runs the child, waits, then records `{exit_code, signal, ended_at}`.
 - **Keeps the pane alive after exit**, showing
   `exited (code 1) — press r to restart` — instead of the pane vanishing along
@@ -129,8 +131,9 @@ Phone-first PWA; desktop is the same layout with room to breathe.
 
 - xterm.js full-bleed. Output via `tmux pipe-pane`, input via `tmux send-keys` —
   full interactivity with no bespoke PTY layer.
-- Fixed key bar above the Android keyboard: `Esc / Tab / Ctrl / ↑ ↓ ← → / Ctrl-C`,
-  plus a `⋮` menu: Restart, Stop, Clear, "copy last output."
+- Fixed key bar above the Android keyboard: `Esc / Tab / Ctrl / Shift / ↑ ↓ ← → / Ctrl-C`,
+  plus a `⋮` menu. Ctrl and Shift are sticky modifiers: arm one, then the next
+  typed character or arrow gets the modifier (Shift+arrows → tmux `S-Up` etc.).
 - **No tmux prefix keys in the UI, ever.**
 
 ### PWA
@@ -152,9 +155,9 @@ This is remote code execution by design. Non-negotiable floor:
 
 Deliberately tiny. No SQLite.
 
-- `~/.muxboard/apps.json` — `[{id, name, cmd, cwd, env, autorestart, pinned}]`.
+- `~/.proot/apps.json` — `[{id, name, cmd, cwd, env, autorestart, pinned}]`.
   Editable over SSH when the UI is broken; backup = copy one file.
-- `~/.muxboard/state/<id>.json` — runtime state, written by the wrapper.
+- `~/.proot/state/<id>.json` — runtime state, written by the wrapper.
   The state dir is the API's source of truth, so wrapper and agent stay decoupled:
   agent dies, wrappers keep recording faithfully.
 
@@ -164,12 +167,12 @@ Deliberately tiny. No SQLite.
    plain Linux and does the right thing for each: drop the binary, ensure tmux,
    set up the Termux side (wake-lock, battery-exemption prompt, Termux:Boot hook)
    when applicable, print the URL + QR.
-2. **Zero config to first screen.** `muxboard serve` → QR code in the terminal →
+2. **Zero config to first screen.** `proot serve` → QR code in the terminal →
    scan → dashboard. That moment is the README GIF that sells the project.
 
 ## v1 scope
 
-1. `muxboard serve` — agent + embedded UI, QR + token on first run.
+1. `proot serve` — agent + embedded UI, QR + token on first run.
 2. Read-only dashboard of all tmux windows (managed and not) with live status.
 3. "New app" form (name, command, workdir, autorestart) → managed tmux window.
 4. Terminal view with input and thumb-sized Restart / Stop / Ctrl-C.
@@ -192,14 +195,15 @@ Estimated size: ~2,000 lines of Go plus a modest vanilla/lightweight frontend.
 
 ## Naming
 
-Shortlist and rationale:
+Final name: **`proot`** — matches the repo and the environment it's built for
+(proot-distro on Termux). Trade-off accepted deliberately: it collides with the
+name of the proot emulator itself, but the emulator lives on the Termux side of
+the wall while this binary lives inside the distro, so they never share a PATH
+in the primary deployment.
 
-- **`muxboard`** *(current pick)* — says exactly what it is: a dashboard for tmux.
-  Best search discoverability; "muxboard: see everything running on your phone
-  server" is a self-explanatory README title.
-- `pocketd` — best story ("a daemon in your pocket"), weaker discoverability.
-- `muxa` — best as a brand if the project outgrows tmux internals.
-- `prootos` — ties the name to proot even though it runs anywhere; avoided.
+History: developed under the working name `muxboard` (best search
+discoverability). Other candidates: `pocketd` (best story — "a daemon in your
+pocket"), `muxa` (best brand if it outgrows tmux internals).
 
 ## Open questions
 

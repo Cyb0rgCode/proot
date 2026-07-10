@@ -1,4 +1,4 @@
-BINARY  := muxboard
+BINARY  := proot
 VERSION := 0.1.0
 LDFLAGS := -s -w
 

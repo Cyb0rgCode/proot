@@ -1,4 +1,4 @@
-/* muxboard frontend — vanilla JS, no build step. */
+/* proot frontend — vanilla JS, no build step. */
 (() => {
 "use strict";
 
@@ -11,10 +11,10 @@ let token = "";
   const m = location.hash.match(/[#&]t=([0-9a-f]+)/i);
   if (m) {
     token = m[1];
-    localStorage.setItem("mb_token", token);
+    localStorage.setItem("proot_token", token);
     history.replaceState(null, "", location.pathname); // don't leave it in the URL bar
   } else {
-    token = localStorage.getItem("mb_token") || "";
+    token = localStorage.getItem("proot_token") || "";
   }
 }
 
@@ -26,7 +26,7 @@ function showGate() {
 $("#gate-form").addEventListener("submit", (e) => {
   e.preventDefault();
   token = $("#gate-token").value.trim();
-  localStorage.setItem("mb_token", token);
+  localStorage.setItem("proot_token", token);
   location.reload();
 });
 
@@ -270,7 +270,8 @@ document.querySelectorAll(".overlay:not(#term-view)").forEach((el) =>
 
 /* ---------- terminal ---------- */
 
-let term = null, fit = null, termWS = null, termApp = null, ctrlArmed = false;
+let term = null, fit = null, termWS = null, termApp = null;
+let ctrlArmed = false, shiftArmed = false;
 
 function openTermForApp(id) {
   const a = (snap.apps || []).find((x) => x.id === id);
@@ -318,6 +319,9 @@ function openTerm(paneID, title, app) {
       const c = data.toUpperCase().charCodeAt(0);
       if (c >= 64 && c <= 95) data = String.fromCharCode(c - 64);
       setCtrl(false);
+    } else if (shiftArmed && data.length === 1) {
+      data = data.toUpperCase();
+      setShift(false);
     }
     if (termWS.readyState === 1) termWS.send(JSON.stringify({ t: "input", data }));
   });
@@ -343,6 +347,7 @@ function closeTerm() {
   if (term) term.dispose();
   term = fit = termWS = termApp = null;
   setCtrl(false);
+  setShift(false);
   $("#term-view").classList.add("hidden");
 }
 
@@ -357,12 +362,23 @@ function setCtrl(v) {
   ctrlArmed = v;
   $("#key-ctrl").classList.toggle("armed", v);
 }
+function setShift(v) {
+  shiftArmed = v;
+  $("#key-shift").classList.toggle("armed", v);
+}
 $("#key-ctrl").addEventListener("click", () => { setCtrl(!ctrlArmed); term && term.focus(); });
+$("#key-shift").addEventListener("click", () => { setShift(!shiftArmed); term && term.focus(); });
 
 document.querySelectorAll(".keybar button[data-key]").forEach((b) =>
   b.addEventListener("click", () => {
+    let key = b.dataset.key;
+    // Armed modifiers turn named keys into their tmux chord form
+    // (S-Up for shift-arrow selection, C-Left for word jumps, S-Tab = BTab).
+    if (shiftArmed && /^(Up|Down|Left|Right)$/.test(key)) { key = "S-" + key; setShift(false); }
+    else if (shiftArmed && key === "Tab") { key = "BTab"; setShift(false); }
+    else if (ctrlArmed && /^(Up|Down|Left|Right)$/.test(key)) { key = "C-" + key; setCtrl(false); }
     if (termWS && termWS.readyState === 1) {
-      termWS.send(JSON.stringify({ t: "key", key: b.dataset.key }));
+      termWS.send(JSON.stringify({ t: "key", key }));
     }
     term && term.focus();
   }));

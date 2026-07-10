@@ -1,4 +1,4 @@
-// Package runner implements `muxboard run --id <id>` — the wrapper that
+// Package runner implements `proot run --id <id>` — the wrapper that
 // every managed app runs inside of. It is the only writer of the app's
 // runtime state file, which is what makes the agent/wrapper split race-free:
 // the agent can die and the wrapper keeps recording faithfully.
@@ -23,9 +23,9 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 
-	"muxboard/internal/config"
-	"muxboard/internal/state"
-	"muxboard/internal/tmuxctl"
+	"proot/internal/config"
+	"proot/internal/state"
+	"proot/internal/tmuxctl"
 )
 
 const (
@@ -46,15 +46,15 @@ type wrapper struct {
 	rs *state.RunState
 }
 
-// Main is the entry point for `muxboard run --id <id>`. It never returns
+// Main is the entry point for `proot run --id <id>`. It never returns
 // except by exiting the process.
 func Main(id string) int {
 	if !state.ValidID(id) {
-		fmt.Fprintf(os.Stderr, "muxboard run: invalid app id %q\n", id)
+		fmt.Fprintf(os.Stderr, "proot run: invalid app id %q\n", id)
 		return 2
 	}
 	if err := config.EnsureDirs(); err != nil {
-		fmt.Fprintf(os.Stderr, "muxboard run: %v\n", err)
+		fmt.Fprintf(os.Stderr, "proot run: %v\n", err)
 		return 1
 	}
 	w := &wrapper{id: id, store: state.NewStore()}
@@ -140,7 +140,7 @@ func (w *wrapper) loop() int {
 // runChild launches the app and blocks until it exits, keeping the state
 // file current on both edges.
 func (w *wrapper) runChild(app state.App) (exitCode int, sigName string, err error) {
-	fmt.Printf("\x1b[2m[muxboard] starting %s: %s\x1b[0m\r\n", app.ID, app.Cmd)
+	fmt.Printf("\x1b[2m[proot] starting %s: %s\x1b[0m\r\n", app.ID, app.Cmd)
 
 	cmd := exec.Command("sh", "-c", app.Cmd)
 	cmd.Dir = app.Cwd
@@ -153,7 +153,7 @@ func (w *wrapper) runChild(app state.App) (exitCode int, sigName string, err err
 		w.recordStart(0)
 		code := 127
 		w.recordEnd(&code, "")
-		fmt.Fprintf(os.Stderr, "[muxboard] failed to start: %v\r\n", err)
+		fmt.Fprintf(os.Stderr, "[proot] failed to start: %v\r\n", err)
 		return 127, "", err
 	}
 	w.recordStart(cmd.Process.Pid)
@@ -293,7 +293,7 @@ func readByteTimeout(fd int, timeout time.Duration) (byte, bool) {
 }
 
 func (w *wrapper) printf(format string, args ...any) {
-	fmt.Printf("\r\n\x1b[7m[muxboard]\x1b[0m "+format+"\r\n", args...)
+	fmt.Printf("\r\n\x1b[7m[proot]\x1b[0m "+format+"\r\n", args...)
 }
 
 func exitDesc(code int, sig string) string {

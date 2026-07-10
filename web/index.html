@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0d1117">
-<title>muxboard</title>
+<title>proot</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vendor/xterm.css">
@@ -13,14 +13,14 @@
 <body>
 
 <header>
-  <h1>mux<span>board</span></h1>
+  <h1>pr<span>oot</span></h1>
   <div id="conn" class="pill off">connecting…</div>
   <button id="btn-add" class="primary">＋ App</button>
 </header>
 
 <div id="gate" class="hidden">
   <h2>Locked</h2>
-  <p>Open muxboard using the tokened link printed by <code>muxboard serve</code>
+  <p>Open proot using the tokened link printed by <code>proot serve</code>
      (it looks like <code>http://…/#t=…</code>), or paste the token:</p>
   <form id="gate-form"><input id="gate-token" placeholder="token" autocomplete="off">
   <button class="primary">Unlock</button></form>
@@ -57,6 +57,7 @@
     <button data-key="Escape">esc</button>
     <button data-key="Tab">tab</button>
     <button id="key-ctrl" class="modifier">ctrl</button>
+    <button id="key-shift" class="modifier">shift</button>
     <button data-key="Up">▲</button>
     <button data-key="Down">▼</button>
     <button data-key="Left">◀</button>

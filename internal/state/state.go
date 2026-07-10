@@ -1,4 +1,4 @@
-// Package state owns muxboard's two persistence surfaces: the app
+// Package state owns proot's two persistence surfaces: the app
 // definitions in apps.json and the per-app runtime state files.
 //
 // Write discipline (this is what keeps the design race-free):
@@ -21,10 +21,10 @@ import (
 	"sync"
 	"time"
 
-	"muxboard/internal/config"
+	"proot/internal/config"
 )
 
-// App is a user-defined program muxboard manages.
+// App is a user-defined program proot manages.
 type App struct {
 	ID          string            `json:"id"`
 	Name        string            `json:"name"`

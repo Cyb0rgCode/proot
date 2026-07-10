@@ -1,4 +1,4 @@
-module muxboard
+module proot
 
 go 1.25.0
 

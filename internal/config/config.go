@@ -1,9 +1,9 @@
-// Package config resolves muxboard's on-disk layout.
+// Package config resolves proot's on-disk layout.
 //
-//	~/.muxboard/
+//	~/.proot/
 //	  token          bearer token for the web UI/API
 //	  apps.json      app definitions (the only file a user should hand-edit)
-//	  state/<id>.json    runtime state, written only by the `muxboard run` wrapper
+//	  state/<id>.json    runtime state, written only by the `proot run` wrapper
 //	  state/<id>.crash   last ~200 pane lines captured on a non-zero exit
 //	  state/<id>.stopped flag: user asked for this app to stay down
 //	  pipe/          transient pipe-pane output files for live terminals
@@ -15,17 +15,17 @@ import (
 )
 
 // SessionName is the tmux session managed app windows are created in.
-const SessionName = "muxboard"
+const SessionName = "proot"
 
 func Dir() string {
-	if d := os.Getenv("MUXBOARD_DIR"); d != "" {
+	if d := os.Getenv("PROOT_DIR"); d != "" {
 		return d
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		home = "."
 	}
-	return filepath.Join(home, ".muxboard")
+	return filepath.Join(home, ".proot")
 }
 
 func AppsFile() string             { return filepath.Join(Dir(), "apps.json") }

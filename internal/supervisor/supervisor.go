@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"muxboard/internal/config"
-	"muxboard/internal/state"
-	"muxboard/internal/tmuxctl"
+	"proot/internal/config"
+	"proot/internal/state"
+	"proot/internal/tmuxctl"
 )
 
 // Status values surfaced to the UI.
@@ -54,7 +54,7 @@ type Snapshot struct {
 
 type Supervisor struct {
 	Store *state.Store
-	Exe   string // path to the muxboard binary, for wrapper invocations
+	Exe   string // path to the proot binary, for wrapper invocations
 }
 
 func New() (*Supervisor, error) {
