@@ -13,9 +13,12 @@ windows, open terminals, revive "killed" apps); nothing is real, nothing to inst
 Best viewed on a phone.
 
 <p>
-<img src="docs/ui-dashboard.png" width="300" alt="dashboard">
-<img src="docs/ui-terminal.png" width="300" alt="terminal">
+<img src="docs/ui-dashboard.png" width="300" alt="dashboard showing app cards with live status, CPU and memory">
+<img src="docs/ui-terminal.png" width="300" alt="live terminal with the phone key bar">
 </p>
+
+> **Note on the name:** the binary and project are `phoned`; this repository is still
+> named `proot` (its original name), so clone URLs and the demo link use that slug.
 
 ## Why
 
